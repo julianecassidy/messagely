@@ -132,11 +132,11 @@ class User {
     if (userMessages.length === 0) throw new NotFoundError(`${username} has no messages`);
 
     const tResult = await db.query(
-      `SELECT id, 
-              body, 
-              sent_at, 
-              read_at, 
-              username, 
+      `SELECT id,
+              body,
+              sent_at,
+              read_at,
+              username,
               first_name, last_name, phone
         FROM users AS u
           JOIN messages AS m
@@ -169,13 +169,13 @@ class User {
 
   static async messagesTo(username) {
     const fResult = await db.query(
-      `SELECT id, 
-              body, 
-              sent_at, 
-              read_at, 
-              username, 
-              first_name, 
-              last_name, 
+      `SELECT id,
+              body,
+              sent_at,
+              read_at,
+              username,
+              first_name,
+              last_name,
               phone
         FROM users AS u
           JOIN messages AS m

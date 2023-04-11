@@ -30,7 +30,7 @@ function ensureLoggedIn(req, res, next) {
   return next();
 }
 
-/** Middleware: Requires user is user for route. */
+/** Middleware: Requires user is user for route. Authorization */
 
 function ensureCorrectUser(req, res, next) {
   const currentUser = res.locals.user;
@@ -38,7 +38,7 @@ function ensureCorrectUser(req, res, next) {
 
 if (!currentUser || hasUnauthorizedUsername){
   throw new UnauthorizedError();
-} 
+}
 
   return next();
 }
