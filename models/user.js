@@ -120,30 +120,24 @@ class User {
    */
 
   static async messagesFrom(username) {
-    const mResult = await db.query(
-      `SELECT id, body, sent_at, read_at
-      FROM messages
+    
+    const tResult = await db.query(
+      `SELECT id,
+      body,
+      sent_at,
+      read_at,
+      username,
+      first_name, last_name, phone
+      FROM users AS u
+      JOIN messages AS m
+      ON m.to_username = u.username
       WHERE from_username = $1
       ORDER BY sent_at`,
       [username]);
-
-    const userMessages = mResult.rows;
-
-    if (userMessages.length === 0) throw new NotFoundError(`${username} has no messages`);
-
-    const tResult = await db.query(
-      `SELECT id,
-              body,
-              sent_at,
-              read_at,
-              username,
-              first_name, last_name, phone
-        FROM users AS u
-          JOIN messages AS m
-        ON m.to_username = u.username
-        WHERE from_username = $1
-        ORDER BY sent_at`,
-      [username]);
+      
+      if (tResult.rows.length === 0) {
+        return (`${username} has no messages and needs to make friends`);
+      }
 
       return tResult.rows.map(r => ({
         id: r.id,
@@ -183,6 +177,10 @@ class User {
         WHERE to_username = $1
         ORDER BY sent_at`,
       [username]);
+
+      if (fResult.rows.length === 0) {
+        return (`${username} has no messages and needs to make friends`);
+      }
 
       return fResult.rows.map(r => ({
         id: r.id,
