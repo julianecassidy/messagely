@@ -34,6 +34,7 @@ CREATE TABLE messages (
 INSERT INTO messages (from_username, to_username, body)
 VALUES ('vaughn', 'juliane', 'Hi'),
  ('vaughn', 'juliane', 'current_timestamp'),
+ ('vaughn', 'joel', 'packing my bags'),
  ('juliane', 'vaughn', 'snowboarding'),
  ('juliane', 'joel', 'Python rules'),
  ('elie', 'joel', 'Nice code'),
@@ -53,14 +54,14 @@ CREATE TABLE users (
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   phone TEXT NOT NULL,
-  join_at TIMESTAMP WITH TIME ZONE NOT NULL,
-  last_login_at TIMESTAMP WITH TIME ZONE);
+  join_at TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp NOT NULL,
+  last_login_at TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp);
 
 CREATE TABLE messages (
   id SERIAL PRIMARY KEY,
   from_username TEXT NOT NULL REFERENCES users,
   to_username TEXT NOT NULL REFERENCES users,
   body TEXT NOT NULL,
-  sent_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  sent_at TIMESTAMP WITH TIME ZONE DEFAULT current_timestamp NOT NULL,
   read_at TIMESTAMP WITH TIME ZONE);
 

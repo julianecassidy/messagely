@@ -15,7 +15,6 @@ class User {
   static async register({ username, password, first_name, last_name, phone }) {
     const hashedPassword = await User.hashPassword(password);
     const result = await db.query(
-      // TODO: add current timestamp to paramertization?
       `INSERT INTO users (
           username,
           password,
@@ -25,7 +24,7 @@ class User {
           join_at,
           last_login_at)
         VALUES
-          ($1, $2, $3, $4, $5)
+          ($1, $2, $3, $4, $5, current_timestamp, current_timestamp)
         RETURNING username, password, first_name, last_name, phone`,
       [username, hashedPassword, first_name, last_name, phone]
     );
@@ -125,7 +124,7 @@ class User {
 
   static async messagesFrom(username) {
     const mResult = await db.query(
-      `SELECT id, to_username, body, sent_at, read_at
+      `SELECT id, body, sent_at, read_at
       FROM messages
       WHERE from_username = $1
       ORDER BY sent_at`,
@@ -139,14 +138,21 @@ class User {
       `SELECT username, first_name, last_name, phone
       FROM users
       JOIN messages
-      ON message.to_username = users.username
+      ON messages.to_username = users.username
       WHERE from_username = $1
       ORDER BY sent_at`,
       [username]);
 
       const recieptOfMessage = tResult.rows;
 
-      userMessages.to_user = recieptOfMessage.map(r => r);
+      // console.log("recieptOfMessage", recieptOfMessage);
+      for (let i = 0; i < userMessages.length; i++) {
+        userMessages[i].to_user = recieptOfMessage[i];
+      }
+
+      // userMessages.to_user = recieptOfMessage.map(r => r);
+
+      // console.log("userMessages", userMessages);
 
       return userMessages;
   }
@@ -160,6 +166,36 @@ class User {
    */
 
   static async messagesTo(username) {
+    const mResult = await db.query(
+      `SELECT id, body, sent_at, read_at
+      FROM messages
+      WHERE to_username = $1
+      ORDER BY sent_at`,
+      [username]);
+
+    const receivedMessages = mResult.rows;
+
+    if (receivedMessages.length === 0) 
+      throw new NotFoundError(`${username} has not recieved any messages`);
+
+    const fResult = await db.query(
+      `SELECT username, first_name, last_name, phone
+      FROM users
+      JOIN messages
+      ON messages.from_username = users.username
+      WHERE to_username = $1
+      ORDER BY sent_at`,
+      [username]);
+
+      const senderOfMessage = fResult.rows;
+
+      for (let i = 0; i < receivedMessages.length; i++) {
+        receivedMessages[i].from_user = senderOfMessage[i];
+      }
+
+      // receivedMessages.to_user = senderOfMessage.map(r => r);
+
+      return receivedMessages;
   }
 
   static async hashPassword(password) {
