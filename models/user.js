@@ -53,7 +53,6 @@ class User {
   }
 
   /** Update last_login_at for user
-   * Returning { username, last_login_at }
    */
 
   static async updateLoginTimestamp(username) {
@@ -67,8 +66,6 @@ class User {
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No such user: ${username}`);
-
-    return user;
   }
 
   /** All: basic info on all users:
@@ -135,26 +132,31 @@ class User {
     if (userMessages.length === 0) throw new NotFoundError(`${username} has no messages`);
 
     const tResult = await db.query(
-      `SELECT username, first_name, last_name, phone
-      FROM users
-      JOIN messages
-      ON messages.to_username = users.username
-      WHERE from_username = $1
-      ORDER BY sent_at`,
+      `SELECT id, 
+              body, 
+              sent_at, 
+              read_at, 
+              username, 
+              first_name, last_name, phone
+        FROM users AS u
+          JOIN messages AS m
+        ON m.to_username = u.username
+        WHERE from_username = $1
+        ORDER BY sent_at`,
       [username]);
 
-      const recieptOfMessage = tResult.rows;
-
-      // console.log("recieptOfMessage", recieptOfMessage);
-      for (let i = 0; i < userMessages.length; i++) {
-        userMessages[i].to_user = recieptOfMessage[i];
-      }
-
-      // userMessages.to_user = recieptOfMessage.map(r => r);
-
-      // console.log("userMessages", userMessages);
-
-      return userMessages;
+      return tResult.rows.map(r => ({
+        id: r.id,
+        body: r.body,
+        sent_at: r.sent_at,
+        read_at: r.read_at,
+        to_user: {
+          username: r.username,
+          first_name: r.first_name,
+          last_name: r.last_name,
+          phone: r.phone
+        }
+      }));
   }
 
   /** Return messages to this user.
@@ -166,36 +168,34 @@ class User {
    */
 
   static async messagesTo(username) {
-    const mResult = await db.query(
-      `SELECT id, body, sent_at, read_at
-      FROM messages
-      WHERE to_username = $1
-      ORDER BY sent_at`,
-      [username]);
-
-    const receivedMessages = mResult.rows;
-
-    if (receivedMessages.length === 0) 
-      throw new NotFoundError(`${username} has not recieved any messages`);
-
     const fResult = await db.query(
-      `SELECT username, first_name, last_name, phone
-      FROM users
-      JOIN messages
-      ON messages.from_username = users.username
-      WHERE to_username = $1
-      ORDER BY sent_at`,
+      `SELECT id, 
+              body, 
+              sent_at, 
+              read_at, 
+              username, 
+              first_name, 
+              last_name, 
+              phone
+        FROM users AS u
+          JOIN messages AS m
+        ON m.from_username = u.username
+        WHERE to_username = $1
+        ORDER BY sent_at`,
       [username]);
 
-      const senderOfMessage = fResult.rows;
-
-      for (let i = 0; i < receivedMessages.length; i++) {
-        receivedMessages[i].from_user = senderOfMessage[i];
-      }
-
-      // receivedMessages.to_user = senderOfMessage.map(r => r);
-
-      return receivedMessages;
+      return fResult.rows.map(r => ({
+        id: r.id,
+        body: r.body,
+        sent_at: r.sent_at,
+        read_at: r.read_at,
+        from_user: {
+          username: r.username,
+          first_name: r.first_name,
+          last_name: r.last_name,
+          phone: r.phone
+        }
+      }));
   }
 
   static async hashPassword(password) {
